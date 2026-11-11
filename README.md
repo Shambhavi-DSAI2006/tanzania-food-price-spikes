@@ -12,12 +12,12 @@ Author: **Shambhavi Srivastava** (ZDA24B005) · Dataset approved by Dr. I. Nyala
 | Section | Content | Status |
 |---|---|---|
 | 1 · Data understanding | Shape, attribute types, missing values, data-quality dimensions | ✅ Complete |
-| 2 · Exploratory analysis | Summaries, spike threshold, correlation + confounder, χ² tests, Gower and haversine distance | ✅ Complete (being revised after instructor feedback, 10 Nov) |
+| 2 · Exploratory analysis | Summaries, decision-based spike threshold, correlation + confounder, χ² tests, Gower and haversine distance, dependence-aware uncertainty, evaluation plan | ✅ Complete (revised after instructor feedback, 10 Nov) |
 | 3 · Preprocessing | Within-series cleaning, past-only features, robust scaling fitted on training data | 🔄 Next |
 | 4 · Mining | Classification with baselines; precision / recall / F1 / PR-AUC with time-series cross-validation | ⏳ Planned |
 | 5 · Findings | One-page summary for the Ministry, scaling, ethics and limits | ⏳ Planned |
 
-**Evaluation design (agreed with the instructor):** one time split for all series. Training uses 2006–2021, with model tuning by cross-validation inside these years. The primary test is **Jan 2023 – Sep 2026, wholesale only**; 2022 (retail and wholesale) is reported as a secondary check.
+**Evaluation design (set by the instructor, 10 Nov 2026):** one time split for all series. Training uses 2006–2021, with all tuning by rolling-origin cross-validation inside these years (validation years 2017–2021). The primary test is **Jan 2023 – Sep 2026, wholesale only**; 2022 (retail and wholesale, reported separately) is a secondary check. Missing Zanzibar markets are stated as a limitation; the data are not extended.
 
 ---
 
@@ -42,12 +42,14 @@ World Food Programme, *United Republic of Tanzania — Food Prices* and *Markets
 
 **Exploratory analysis (Section 2, training years 2006–2021 only)**
 - **Spikes are common and heavy-tailed:** 11.9% of months rise by more than 10%. A normal curve with the same spread would predict 0.16%.
-- **The 10% threshold matches the boxplot outlier fence** (Q3 + 1.5·IQR = +9.7%) and sits at the 88th percentile.
+- **The 10% threshold is justified by the Ministry's decision:** food is 59.9% of household spending (NBS HBS 2017/18), and a 10% jump in one month far exceeds a typical series' yearly drift (+0.3%/yr). About two in three such jumps leave prices still ≥10% higher three months later, and the threshold flags about 16 of every 100 wholesale series a month (versus 28 at 5%, or only 12% of lasting rises caught at 20%). The statistics agree: 10% ≈ the boxplot outlier fence (+9.7%) and the 88th percentile.
 - **Confounder:** maize and rice prices correlate at ρ = 0.79, but the shared rise in prices over time (6–8% a year) drives this. Their month-to-month changes correlate at only ρ = 0.36.
 - **Spikes cluster:** the chance of a spike rises from 10.6% to 20.3% when there was a spike the month before.
 - **Season and product matter:** maize spike risk is 21–30% in October–January (the lean season). Vegetables spike most often, meat least.
 - **Retail prices look "sticky":** 46% of retail monthly changes are exactly zero (8% for wholesale), suggesting carried-forward prices.
-- **Nearby markets move together:** price changes correlate at about 0.35 for markets under 250 km apart versus 0.19 beyond 1,000 km (haversine distance).
+- **Nearby markets move together:** price changes correlate at about 0.35 for markets under 250 km apart versus 0.19 beyond 1,000 km (haversine distance; Mantel test p = 0.0001).
+- **The observations are not independent** (repeated months, markets moving together). Resampling whole series and whole months gives honest intervals 1.8–5× wider than naive ones, and every key finding still holds.
+- **The evaluation must handle three shifts:** the spike rate drifts (wholesale 6–32% by year; 9.6% in the test years); training is 77% retail while the test is 100% wholesale; and wholesale prices are increasingly reported unchanged (15% of months in 2021 → 57% in 2026). The evaluation plan (§2.6) addresses each.
 
 ---
 
@@ -67,6 +69,12 @@ World Food Programme, *United Republic of Tanzania — Food Prices* and *Markets
 
 **Nearby markets co-move**
 ![Distance vs co-movement](figures/fig_2_4_distance_comovement.png)
+
+**What each spike threshold means for the Ministry**
+![Threshold trade-off](figures/fig_2_5_threshold_tradeoff.png)
+
+**The spike rate changes over time**
+![Spike rate by year](figures/fig_2_6_spike_rate_by_year.png)
 
 ---
 
@@ -100,7 +108,7 @@ Or open the notebook in VS Code or Jupyter and choose **Run All**. A full run ta
 
 **Reproducibility checks built into the notebook:**
 1. A **data fingerprint** (row count, date range and SHA-256 checksum of each CSV, independent of line endings) stops the run if the data file is not the analysed version.
-2. A final **consistency check** recomputes every key number quoted in the text and stops the run if any no longer matches.
+2. A final **consistency check** recomputes the 35 key numbers quoted in the text and stops the run if any no longer matches.
 
 ---
 
