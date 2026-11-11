@@ -17,6 +17,8 @@ Author: **Shambhavi Srivastava** (ZDA24B005) · Dataset approved by Dr. I. Nyala
 | 4 · Mining | Classification with baselines; precision / recall / F1 / PR-AUC with time-series cross-validation | 🔄 Next |
 | 5 · Findings | One-page summary for the Ministry, scaling, ethics and limits | ⏳ Planned |
 
+**Instructor feedback (10 Nov 2026):** all nine points have been addressed. See [FEEDBACK.md](FEEDBACK.md) for what changed and where.
+
 **Evaluation design (set by the instructor, 10 Nov 2026):** one time split for all series. Training uses 2006–2021, with all tuning by rolling-origin cross-validation inside these years (validation years 2017–2021). The primary test is **Jan 2023 – Sep 2026, wholesale only**; 2022 (retail and wholesale, reported separately) is a secondary check. Missing Zanzibar markets are stated as a limitation; the data are not extended.
 
 ---
@@ -103,6 +105,8 @@ data/Shambhavi_MiniProject_Markets.csv  WFP markets table (renamed, otherwise un
 figures/                                figures saved by the notebook
 requirements.txt                        Python packages
 LICENSE                                 MIT licence for the code
+FEEDBACK.md                             response to instructor feedback, point by point
+.gitattributes                          consistent line endings across operating systems
 ```
 
 ---
