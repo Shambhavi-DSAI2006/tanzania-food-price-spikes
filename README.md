@@ -13,8 +13,8 @@ Author: **Shambhavi Srivastava** (ZDA24B005) · Dataset approved by Dr. I. Nyala
 |---|---|---|
 | 1 · Data understanding | Shape, attribute types, missing values, data-quality dimensions | ✅ Complete |
 | 2 · Exploratory analysis | Summaries, decision-based spike threshold, correlation + confounder, χ² tests, Gower and haversine distance, dependence-aware uncertainty, evaluation plan | ✅ Complete (revised after instructor feedback, 10 Nov) |
-| 3 · Preprocessing | Within-series cleaning, past-only features, robust scaling fitted on training data | 🔄 Next |
-| 4 · Mining | Classification with baselines; precision / recall / F1 / PR-AUC with time-series cross-validation | ⏳ Planned |
+| 3 · Preprocessing | Peer-based outlier cleaning, missing-month strategy, past-only features with a leakage test, shape-based robust scaling fitted on training data, entropy discretization, PCA check | ✅ Complete |
+| 4 · Mining | Classification with baselines; precision / recall / F1 / PR-AUC with time-series cross-validation | 🔄 Next |
 | 5 · Findings | One-page summary for the Ministry, scaling, ethics and limits | ⏳ Planned |
 
 **Evaluation design (set by the instructor, 10 Nov 2026):** one time split for all series. Training uses 2006–2021, with all tuning by rolling-origin cross-validation inside these years (validation years 2017–2021). The primary test is **Jan 2023 – Sep 2026, wholesale only**; 2022 (retail and wholesale, reported separately) is a secondary check. Missing Zanzibar markets are stated as a limitation; the data are not extended.
@@ -51,6 +51,13 @@ World Food Programme, *United Republic of Tanzania — Food Prices* and *Markets
 - **The observations are not independent** (repeated months, markets moving together). Resampling whole series and whole months gives honest intervals 1.8–5× wider than naive ones, and every key finding still holds.
 - **The evaluation must handle three shifts:** the spike rate drifts (wholesale 6–32% by year; 9.6% in the test years); training is 77% retail while the test is 100% wholesale; and wholesale prices are increasingly reported unchanged (15% of months in 2021 → 57% in 2026). The evaluation plan (§2.6) addresses each.
 
+**Preprocessing (Section 3)**
+- **Outliers are judged against other markets in the same month,** not against a series' own history. The textbook series-level rule breaks for 141 series with MAD = 0 and would delete genuine spikes. The peer-based rule flags 226 prices (0.33%, including the 3,000,000 TZS/kg error), removes 0.7% of training labels and leaves the spike rate almost unchanged (11.92% → 11.80%).
+- **Missing months are never filled for labels, and never interpolated for features** (interpolation uses future prices). Remaining feature gaps are filled with training-period group medians.
+- **15 features use only past months or information known in advance** (calendar month, commodity). A scrambling test proves it: replacing every price from June 2019 onwards with random numbers leaves all earlier features unchanged.
+- **Every feature is skewed or heavy-tailed,** so robust z-scores (with log and clipping where needed) are used, all fitted on 2006–2021. Fitting on all years would have shifted one scale by 33%.
+- **Entropy discretization reveals a U-shaped risk:** a spike follows 25% of sharp falls and 20% of sharp rises, but only 5% of unchanged prices. **PCA is not used:** the largest correlation is 0.73 and 7 of 9 components are needed for 90% of the variance.
+
 ---
 
 ## Figures
@@ -75,6 +82,15 @@ World Food Programme, *United Republic of Tanzania — Food Prices* and *Markets
 
 **The spike rate changes over time**
 ![Spike rate by year](figures/fig_2_6_spike_rate_by_year.png)
+
+**Outlier cleaning against peer markets**
+![Outlier cleaning](figures/fig_3_1_outlier_cleaning.png)
+
+**Normalization chosen from each feature's shape**
+![Transformation](figures/fig_3_2_transformation.png)
+
+**PCA check: little redundancy**
+![Scree plot](figures/fig_3_3_pca_scree.png)
 
 ---
 
@@ -108,7 +124,7 @@ Or open the notebook in VS Code or Jupyter and choose **Run All**. A full run ta
 
 **Reproducibility checks built into the notebook:**
 1. A **data fingerprint** (row count, date range and SHA-256 checksum of each CSV, independent of line endings) stops the run if the data file is not the analysed version.
-2. A final **consistency check** recomputes the 35 key numbers quoted in the text and stops the run if any no longer matches.
+2. A final **consistency check** recomputes every key number quoted in the text (53 so far) and stops the run if any no longer matches.
 
 ---
 
