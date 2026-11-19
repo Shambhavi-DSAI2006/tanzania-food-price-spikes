@@ -14,10 +14,10 @@ Author: **Shambhavi Srivastava** (ZDA24B005) · Dataset approved by Dr. I. Nyala
 | 1 · Data understanding | Shape, attribute types, missing values, data-quality dimensions | ✅ Complete |
 | 2 · Exploratory analysis | Summaries, decision-based spike threshold, correlation + confounder, χ² tests, Gower and haversine distance, dependence-aware uncertainty, evaluation plan | ✅ Complete (revised after instructor feedback, 10 Nov) |
 | 3 · Preprocessing | Peer-based outlier cleaning, missing-month strategy, past-only features with a leakage test, shape-based robust scaling fitted on training data, entropy discretization, PCA check | ✅ Complete |
-| 4 · Mining | Classification with baselines; precision / recall / F1 / PR-AUC with time-series cross-validation | 🔄 Next |
-| 5 · Findings | One-page summary for the Ministry, scaling, ethics and limits | ⏳ Planned |
+| 4 · Mining | Classification: decision tree, Naive Bayes and random forest against three baselines, rolling-origin CV, pre-declared selection rule, corrected paired t-tests, one-time test with bootstrap intervals, breakdowns by year / subgroup / region, threshold sensitivity | ✅ Complete |
+| 5 · Findings | Recommendations, scaling to 1,000× the data, ethics (fairness, misuse, privacy), limits and extensions; [one-page summary](Shambhavi_MiniProject_Summary.pdf) | ✅ Complete |
 
-**Instructor feedback (10 Nov 2026):** all nine points have been addressed. See [FEEDBACK.md](FEEDBACK.md) for what changed and where.
+**Instructor feedback:** all nine points from 10 Nov have been addressed; Sections 1–3 were reviewed as satisfactory on 18 Nov. See [FEEDBACK.md](FEEDBACK.md) for what changed and where.
 
 **Evaluation design (set by the instructor, 10 Nov 2026):** one time split for all series. Training uses 2006–2021, with all tuning by rolling-origin cross-validation inside these years (validation years 2017–2021). The primary test is **Jan 2023 – Sep 2026, wholesale only**; 2022 (retail and wholesale, reported separately) is a secondary check. Missing Zanzibar markets are stated as a limitation; the data are not extended.
 
@@ -35,7 +35,22 @@ World Food Programme, *United Republic of Tanzania — Food Prices* and *Markets
 
 ---
 
-## Key findings so far
+## Headline result
+
+On the untouched test period (Jan 2023 – Sep 2026, wholesale, 760 spikes in 8,000 series-months), a **random forest** that flags the 16% of series it rates most at risk each month:
+
+| | Random forest | Rule of thumb: "spiked last month" |
+|---|---|---|
+| Real spikes caught (recall) | **35.4%** (95% CI 31.3–39.2) | 17.4% |
+| Flags that were real spikes (precision) | **21.1%** (CI 18.8–23.3) | 17.7% |
+| ROC-AUC | **0.677** (CI 0.656–0.696) | 0.545 |
+| PR-AUC lift over chance | **2.0×** | 1.15× |
+
+The gain in recall over the rule of thumb is **+18.0 points (CI 13.6–22.4)**. The base spike rate is 9.5%, so a random shortlist would be right about 1 time in 10. Plain-language summary: [Shambhavi_MiniProject_Summary.pdf](Shambhavi_MiniProject_Summary.pdf).
+
+---
+
+## Key findings
 
 **Data understanding (Section 1)**
 - **No empty cells, but 7.0% of expected months have no row** (5,141 of 73,140). The gaps are systematic: wholesale series miss 15.2% of months versus 2.4% for retail (χ² test), and the rate varies by region and year.
@@ -59,6 +74,19 @@ World Food Programme, *United Republic of Tanzania — Food Prices* and *Markets
 - **15 features use only past months or information known in advance** (calendar month, commodity). A scrambling test proves it: replacing every price from June 2019 onwards with random numbers leaves all earlier features unchanged.
 - **Every feature is skewed or heavy-tailed,** so robust z-scores (with log and clipping where needed) are used, all fitted on 2006–2021. Fitting on all years would have shifted one scale by 33%.
 - **Entropy discretization reveals a U-shaped risk:** a spike follows 25% of sharp falls and 20% of sharp rises, but only 5% of unchanged prices. **PCA is not used:** the largest correlation is 0.73 and 7 of 9 components are needed for 90% of the variance.
+
+**Mining (Section 4)**
+- **The selection rule was fixed before any results were seen:** pick the best mean cross-validated PR-AUC, unless a simpler model is within one standard error. CV PR-AUC on wholesale rows: lazy 0.133, persistence 0.142, seasonal 0.133, decision tree 0.201, Naive Bayes 0.211, **random forest 0.271**. The forest won all five folds against every alternative (corrected paired t-test vs baselines p ≤ 0.017).
+- **Training on wholesale rows only beat using all rows** (tree 0.201 vs 0.180), consistent with the retail→wholesale shift found in §2.6.
+- **Alert rule:** a monthly budget (flag the top 15.7%, the training spike share) beat a fixed probability cut-off, which flagged only 5.6% of series in the test years because the predicted risk drifted.
+- **Stable across time:** recall rose from 28% (2023) to 44% (2026). The 2022 check gave the same picture for wholesale (precision 33.9%, recall 25.5%) and retail (23.7%, 26.3%; persistence 13.9%, 13.5%).
+- **Where it is weaker:** series first seen after 2021 (recall 28% vs 38%), stale quotes (18% vs 38%), and some regions (12% in Tabora vs 51% in Kigoma). These are reported as fairness findings in §5.3.
+- **What drives the warnings:** a rise in the national price last month (26% of forest importance), especially for maize; the share of other foods spiking in the same market (13%); distance from the 12-month average (10%); the calendar month (11%). A readable depth-2 tree finds the same rules.
+- **The 10% threshold is not cherry-picked:** at 5%, 15% and 20% the ROC-AUC stays at 0.67–0.70 and recall stays about double that of persistence.
+
+**Findings (Section 5)**
+- Use the model as a **monthly shortlist** for officers to verify, re-trained yearly; do not publish it, as traders could use it to hoard.
+- At 1,000× the data (about 68 million rows) the pipeline maps to partitioned window functions, approximate quantiles, histogram-based trees on a stratified sample, and incremental monthly scoring.
 
 ---
 
@@ -94,12 +122,22 @@ World Food Programme, *United Republic of Tanzania — Food Prices* and *Markets
 **PCA check: little redundancy**
 ![Scree plot](figures/fig_3_3_pca_scree.png)
 
+**Choosing tree depth: bias against variance in cross-validation**
+![Depth vs CV score](figures/fig_4_1_depth_bias_variance.png)
+
+**Test-period precision-recall and ROC curves**
+![Test PR and ROC](figures/fig_4_2_test_pr_roc.png)
+
+**What the random forest relies on**
+![Feature importance](figures/fig_4_3_feature_importance.png)
+
 ---
 
 ## Repository contents
 
 ```
 Shambhavi_MiniProject.ipynb             analysis notebook (all outputs saved)
+Shambhavi_MiniProject_Summary.pdf       one-page plain-language summary for the Ministry
 data/Shambhavi_MiniProject_Data.csv     WFP price table (renamed, otherwise unchanged)
 data/Shambhavi_MiniProject_Markets.csv  WFP markets table (renamed, otherwise unchanged)
 figures/                                figures saved by the notebook
@@ -124,11 +162,11 @@ pip install -r requirements.txt
 jupyter nbconvert --to notebook --execute --inplace Shambhavi_MiniProject.ipynb
 ```
 
-Or open the notebook in VS Code or Jupyter and choose **Run All**. A full run takes about 30 seconds.
+Or open the notebook in VS Code or Jupyter and choose **Run All**. A full run takes about 3–5 minutes (most of it is the cross-validation in Section 4).
 
 **Reproducibility checks built into the notebook:**
 1. A **data fingerprint** (row count, date range and SHA-256 checksum of each CSV, independent of line endings) stops the run if the data file is not the analysed version.
-2. A final **consistency check** recomputes every key number quoted in the text (53 so far) and stops the run if any no longer matches.
+2. A final **consistency check** recomputes every key number quoted in the text (74 numbers) and stops the run if any no longer matches.
 
 ---
 
