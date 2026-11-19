@@ -81,7 +81,7 @@ The gain in recall over the rule of thumb is **+18.0 points (CI 13.6–22.4)**. 
 - **Alert rule:** a monthly budget (flag the top 15.7%, the training spike share) beat a fixed probability cut-off, which flagged only 5.6% of series in the test years because the predicted risk drifted.
 - **Stable across time:** recall rose from 28% (2023) to 44% (2026). The 2022 check gave the same picture for wholesale (precision 33.9%, recall 25.5%) and retail (23.7%, 26.3%; persistence 13.9%, 13.5%).
 - **Where it is weaker:** series first seen after 2021 (recall 28% vs 38%), stale quotes (18% vs 38%), and some regions (12% in Tabora vs 51% in Kigoma). These are reported as fairness findings in §5.3.
-- **What drives the warnings:** a rise in the national price last month (26% of forest importance), especially for maize; the share of other foods spiking in the same market (13%); distance from the 12-month average (10%); the calendar month (11%). A readable depth-2 tree finds the same rules.
+- **What drives the warnings:** a rise in the national price last month (26% of forest importance), especially for maize; the share of all series nationwide that spiked in the last 3 months (13%); distance from the 12-month average (10%); the calendar month (11%). A readable depth-2 tree finds the same rules.
 - **The 10% threshold is not cherry-picked:** at 5%, 15% and 20% the ROC-AUC stays at 0.67–0.70 and recall stays about double that of persistence.
 
 **Findings (Section 5)**
@@ -166,7 +166,7 @@ Or open the notebook in VS Code or Jupyter and choose **Run All**. A full run ta
 
 **Reproducibility checks built into the notebook:**
 1. A **data fingerprint** (row count, date range and SHA-256 checksum of each CSV, independent of line endings) stops the run if the data file is not the analysed version.
-2. A final **consistency check** recomputes every key number quoted in the text (74 numbers) and stops the run if any no longer matches.
+2. A final **consistency check** recomputes every key number quoted in the text (79 numbers) and stops the run if any no longer matches.
 
 ---
 
