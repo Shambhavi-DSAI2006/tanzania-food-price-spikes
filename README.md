@@ -46,7 +46,7 @@ On the untouched test period (Jan 2023 – Sep 2026, wholesale, 760 spikes in 8,
 | ROC-AUC | **0.677** (CI 0.656–0.696) | 0.545 |
 | PR-AUC lift over chance | **2.0×** | 1.15× |
 
-The gain in recall over the rule of thumb is **+18.0 points (CI 13.6–22.4)**. The base spike rate is 9.5%, so a random shortlist would be right about 1 time in 10. Plain-language summary: [Shambhavi_MiniProject_Summary.pdf](Shambhavi_MiniProject_Summary.pdf).
+The gain in recall over the rule of thumb is **+18.0 points (CI 13.6–22.4)**. The gain is not only from raising more alerts: given exactly the rule's workload (9.3% of series flagged), the model catches **24.2%** of spikes vs 17.4%, with precision **24.0%** vs 17.7%. The base spike rate is 9.5%, so a random shortlist would be right about 1 time in 10. Plain-language summary: [Shambhavi_MiniProject_Summary.pdf](Shambhavi_MiniProject_Summary.pdf).
 
 ---
 
@@ -166,7 +166,7 @@ Or open the notebook in VS Code or Jupyter and choose **Run All**. A full run ta
 
 **Reproducibility checks built into the notebook:**
 1. A **data fingerprint** (row count, date range and SHA-256 checksum of each CSV, independent of line endings) stops the run if the data file is not the analysed version.
-2. A final **consistency check** recomputes every key number quoted in the text (79 numbers) and stops the run if any no longer matches.
+2. A final **consistency check** recomputes every key number quoted in the text (85 numbers) and stops the run if any no longer matches.
 
 ---
 
